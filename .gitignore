@@ -1,4 +1,4 @@
-sim.out
+**/sim.out
 *.vcd
 *.fst
 *.lxt

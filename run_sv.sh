@@ -1,13 +1,25 @@
 #!/bin/bash
 
+PROJECT="$1"
+
+if [ -z "$PROJECT" ]; then
+    echo "Usage: ./run_sv.sh <project-folder>"
+    exit 1
+fi
+
+if [ ! -d "$PROJECT" ]; then
+    echo "❌ Project folder not found: $PROJECT"
+    exit 1
+fi
+
 echo "================================"
-echo "   SystemVerilog Simulation"
+echo " SystemVerilog: $PROJECT"
 echo "================================"
 
 echo ""
 echo "Compiling..."
 
-iverilog -g2012 -o sim.out adder.sv tb_adder.sv
+iverilog -g2012 -o "$PROJECT/sim.out" "$PROJECT"/*.sv
 
 if [ $? -ne 0 ]; then
     echo ""
@@ -22,46 +34,47 @@ echo ""
 echo "Running simulation..."
 echo "--------------------------------"
 
-vvp sim.out
+vvp "$PROJECT/sim.out"
 
 if [ $? -ne 0 ]; then
-    echo ""
     echo "❌ Simulation FAILED"
     echo "Code will NOT be pushed."
     exit 1
 fi
 
 echo "--------------------------------"
-echo "✅ Simulation completed successfully"
+echo "✅ Simulation successful!"
+
+rm -f "$PROJECT/sim.out"
 
 echo ""
-read -p "Push this code to GitHub? [y/N]: " answer
+read -r -p "Push $PROJECT to GitHub? [y/N]: " answer
 
 if [[ "$answer" =~ ^[Yy]$ ]]; then
 
-    echo ""
-    echo "Adding changes..."
-    git add .
+    git add -A
 
-    echo ""
-    read -p "Enter commit message: " message
+    git commit -m "Added $PROJECT SystemVerilog code and simulation"
 
-    if [ -z "$message" ]; then
-        message="Update SystemVerilog code"
+    if [ $? -ne 0 ]; then
+        echo "❌ Commit failed."
+        exit 1
     fi
 
-    git commit -m "$message"
-
-    echo ""
-    echo "Pushing to GitHub..."
     git push
 
-    echo ""
-    echo "🚀 Successfully pushed to GitHub!"
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo "🚀 Successfully pushed to GitHub!"
+    else
+        echo ""
+        echo "❌ GitHub push failed."
+        exit 1
+    fi
 
 else
 
     echo ""
-    echo "⏸️ Push cancelled."
-    echo "Your code was NOT pushed to GitHub."
+    echo "⏸️ Push cancelled. Nothing was pushed."
+
 fi
